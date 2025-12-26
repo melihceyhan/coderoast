@@ -1,65 +1,261 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Flame, Sparkles, Github, Zap } from "lucide-react";
+import CodeEditor from "@/components/CodeEditor";
+import CharacterSelector from "@/components/CharacterSelector";
+import RoastResult from "@/components/RoastResult";
+import FloatingParticles from "@/components/FloatingParticles";
+
+interface RoastData {
+  roast: string;
+  severity: number;
+  characterId: string;
+}
+
+const SAMPLE_CODE = `// Try roasting this code! 🔥
+function calculateTotal(items) {
+  var total = 0;
+  for (var i = 0; i < items.length; i++) {
+    total = total + items[i].price;
+  }
+  return total;
+}`;
 
 export default function Home() {
+  const [code, setCode] = useState(SAMPLE_CODE);
+  const [selectedCharacter, setSelectedCharacter] = useState("gordon");
+  const [isLoading, setIsLoading] = useState(false);
+  const [roastResult, setRoastResult] = useState<RoastData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleRoast = async () => {
+    if (!code.trim()) {
+      setError("Please paste some code first!");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setRoastResult(null);
+
+    try {
+      const response = await fetch("/api/roast", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code,
+          characterId: selectedCharacter,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get roast");
+      }
+
+      const data = await response.json();
+      setRoastResult(data);
+    } catch (err) {
+      setError("Failed to roast your code. Please try again!");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRoastAgain = () => {
+    setRoastResult(null);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen relative">
+      <FloatingParticles />
+
+      {/* Hero Section */}
+      <div className="relative z-10">
+        <div className="max-w-6xl mx-auto px-4 py-8 md:py-16">
+          {/* Header */}
+          <motion.header
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", delay: 0.2 }}
+              className="inline-flex items-center gap-3 mb-4"
+            >
+              <Flame className="w-12 h-12 text-[var(--neon-orange)] fire-text" />
+              <h1
+                className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-[var(--neon-pink)] via-[var(--neon-orange)] to-[var(--neon-cyan)] bg-clip-text text-transparent"
+                style={{ fontFamily: "Orbitron" }}
+              >
+                CodeRoast.ai
+              </h1>
+              <Flame className="w-12 h-12 text-[var(--neon-orange)] fire-text" />
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-xl md:text-2xl text-gray-400 mb-2"
+            >
+              Where bad code meets <span className="text-[var(--neon-pink)]">brutal honesty</span>
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="flex items-center justify-center gap-2 text-sm text-gray-500"
+            >
+              <Sparkles size={14} className="text-[var(--neon-cyan)]" />
+              <span>Powered by AI • 100% Savage • 0% Mercy</span>
+              <Sparkles size={14} className="text-[var(--neon-cyan)]" />
+            </motion.div>
+          </motion.header>
+
+          {/* Main Content */}
+          <div className="space-y-8">
+            {/* Step 1: Code Editor */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[var(--neon-pink)] to-[var(--neon-purple)] flex items-center justify-center font-bold text-sm">
+                  1
+                </div>
+                <h2 className="text-xl font-bold" style={{ fontFamily: "Orbitron" }}>
+                  Paste Your Code
+                </h2>
+              </div>
+              <CodeEditor code={code} onChange={setCode} />
+            </motion.section>
+
+            {/* Step 2: Character Selection */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-green)] flex items-center justify-center font-bold text-sm">
+                  2
+                </div>
+                <h2 className="text-xl font-bold" style={{ fontFamily: "Orbitron" }}>
+                  Choose Your Roaster
+                </h2>
+              </div>
+              <CharacterSelector
+                selected={selectedCharacter}
+                onSelect={setSelectedCharacter}
+              />
+            </motion.section>
+
+            {/* Step 3: Roast Button */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-center py-8"
+            >
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[var(--neon-orange)] to-[var(--neon-pink)] flex items-center justify-center font-bold text-sm">
+                  3
+                </div>
+                <h2 className="text-xl font-bold" style={{ fontFamily: "Orbitron" }}>
+                  Get Roasted
+                </h2>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleRoast}
+                disabled={isLoading}
+                className="neon-button rounded-xl text-xl px-12 py-5 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-3">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Zap size={24} />
+                    </motion.div>
+                    Roasting...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-3 fire-text">
+                    <Flame size={24} />
+                    ROAST MY CODE
+                    <Flame size={24} />
+                  </span>
+                )}
+              </motion.button>
+
+              {/* Error Message */}
+              <AnimatePresence>
+                {error && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-4 text-red-400"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.section>
+
+            {/* Result */}
+            <AnimatePresence>
+              {roastResult && (
+                <RoastResult
+                  roast={roastResult.roast}
+                  severity={roastResult.severity}
+                  characterId={roastResult.characterId}
+                  onRoastAgain={handleRoastAgain}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Footer */}
+          <motion.footer
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="mt-16 pt-8 border-t border-white/10 text-center"
           >
-            Documentation
-          </a>
+            <div className="flex items-center justify-center gap-6 mb-4">
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <Github size={20} />
+                <span>Star on GitHub</span>
+              </a>
+            </div>
+            <p className="text-gray-500 text-sm">
+              Made with 🔥 and questionable coding practices
+            </p>
+            <p className="text-gray-600 text-xs mt-2">
+              No code was harmed in the making of this roast (your code, however...)
+            </p>
+          </motion.footer>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
