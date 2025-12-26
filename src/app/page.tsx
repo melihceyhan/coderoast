@@ -238,7 +238,7 @@ export default function Home() {
           >
             <div className="flex items-center justify-center gap-6 mb-4">
               <a
-                href="https://github.com"
+                href="https://github.com/melihceyhan/coderoast"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
